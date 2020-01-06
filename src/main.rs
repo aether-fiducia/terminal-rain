@@ -13,6 +13,8 @@ impl CharStream {
 
     fn new(length: u16) -> Self {
         let mut result = Self {sequence: String::new(), visable: (0,0)};
+        // The rng thread needs to only print valid characters!
+        // Make it happen baby
         let mut rng = rand::thread_rng();
         for _k in 0..length {
             result.sequence.push(rng.gen());
