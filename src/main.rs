@@ -58,6 +58,29 @@ fn resized<W: Write>(size: (u16, u16), stdout: &mut termion::raw::RawTerminal<W>
     }
 }
 
+fn draw<W: Write>(chars: &mut CharStream, stdout: &mut termion::raw::RawTerminal<W>) -> bool {
+    // Take the charstream and parse the string into characters adn their positions
+    let live_streams = chars.sequence.as_str().char_indices().
+        // Filter to only the visable characters
+        filter(|(n, c)| n <= &(chars.visable.1 as usize) && n >= &(chars.visable.0 as usize)).
+        // Write the characters to the correct position
+        map(|(n, c)| write!(stdout, "{}{}", cursor::Goto(chars.x_pos, chars.y_pos - n as u16), c));
+    let (_, y_bound) = termion::terminal_size().unwrap();
+    if (chars.visable.1 as usize) < chars.sequence.len() {
+        chars.grow();
+        chars.y_pos += 1;
+        true
+    } else if chars.y_pos == y_bound && chars.visable.0 != chars.visable.1 {
+        chars.shrink();
+        true
+    } else if chars.visable.0 == chars.visable.1 && chars.y_pos == y_bound {
+        false
+    } else {
+        chars.y_pos += 1;
+        true
+    }
+}
+
 fn main() {
     // Most hard coded numbers are arbitrary, notes will be made for important ones
     // Start rng thread
@@ -78,6 +101,7 @@ fn main() {
         // Check user input
         let mut exit = 0;
         let ev = stdin.next();
+        thread::sleep(Duration::from_millis(10));
         if let Some(Ok(b)) = ev {
             match b {
                 b'q' => {
@@ -98,7 +122,7 @@ fn main() {
             main();
         }
 
-        current.clone().into_iter();
+        current = current.into_iter().filter(|mut x: &mut CharStream| draw(x, &mut stdout)).collect::<Vec<CharStream>>();
 
     }
 
