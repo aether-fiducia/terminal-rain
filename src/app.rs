@@ -65,5 +65,22 @@ impl NodeType {
         match self {
             // Only ref rng because match statements are more greed than god damn closures
             NodeType::Writer { white, ref mut rng } => {
-
+                let chars = String::from(CHARS).chars().coolect::<Vec<char>>();
+                let char = chars.choose(rng).unwrap().to_owned();
+                let bold = rng.gen();
+                let color_type = if *white {
+                    ColorType::White
+                } else {
+                    ColorType::Normal
+                };
+                Character {
+                    char,
+                    bold,
+                    color_type,
+                }
+            }
+            NodeType::Eraser => Character::Blank,
+        }
+    }
+}
 
