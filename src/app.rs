@@ -102,4 +102,20 @@ impl Node {
             char,
         }
     }
+    /* Alright, this is why this shit works.
+     * First things first, the y value needs to increase by one to represent the character stream
+     * moving doen the terminal.
+     * Then, a new character needs to be made for the next_char in the stream.
+     * The previous char needs to be replaced by the current_char and the current_char needs
+     * the next_char.
+     * To avoid clone() hell (even though they all do implement copy, so it probably wouldn't be
+     * too bad) I'm just going to use mem::replace()
+     */
+    fn update(&mut self) {
+        self.y += 1;
+        let next_char = self.node_type.choice_char();
+        self.previous_char = mem::replace(&mut self.char, next_char);
+    }
 }
+
+
