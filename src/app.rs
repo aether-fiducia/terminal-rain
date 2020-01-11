@@ -173,4 +173,27 @@ impl Column {
     }
 }
 
+// Now, I am using a RefCell as of the minute of rthe RawTerminal but I am not sure this is smart.
+// There shouldn't be a reason not to use it, but this is a message to future aether, if some
+// threading bullshit comes up figure out a better way to do this
+impl MatrixApp {
+    
+    fn new() -> MatrixApp {
+        let (size_x, size_y) = termion::terminal_size().unwrap();
+        let mut stdout = stdout().into_raw_mode().unwrap();
+        write!(stdout, "{}{}", termion::clear::All, termion::cursor::Hide).unwrap();
+        // Totally arbitrary, thanks Ryan.
+        let column_count = size_x / 2;
+
+        MatrixApp {
+            (0..column_count)map(|_| Colunm::new(size_y)).collect(),
+            stdout: RefCell::new(stdout)),
+        }
+    }
+
+    // A MatrixApp will need to update on a tick and draw itself, so let's bundle that
+    fn on_tick(&mut self) {
+        self.update();
+        self.draw()
+    }
 
