@@ -3,9 +3,10 @@ use rand::prelude::*;
 use termion;
 use termion::raw::{IntoRawMode, RawTerminal};
 
-use std::cell:RefCell;
+use std::cell::RefCell;
 use std::collections::VecDeque;
 use std::mem;
+use std::io::{stdout, Stdout, Write};
 
 // This should be self explanitory bud
 const CHARS: &str = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNMｦｧｨｩｪｫｬｭｮｯｰｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ1234567890-=*_+|:<>";
@@ -40,7 +41,7 @@ struct Node {
 enum NodeType {
     Eraser,
     // Default color to white by default
-    Writer { white: bool, rng: Threadrng}
+    Writer { white: bool, rng:ThreadRng}
 }
 
 // Define character enum of either advanced char struct or empty
@@ -50,7 +51,7 @@ enum Character {
         bold: bool,
         color_type: ColorType,
     },
-    Empty,
+    Blank,
 }
 
 // Manage the color of either white or default (because I'm a lazy motherfucker)
@@ -61,19 +62,23 @@ enum ColorType {
 
 impl NodeType {
     // Generate a random character if given a writer, Character::Blank otherwise
-    fn chioce_char(&mut self) -> Character {
+    fn choice_char(&mut self) -> Character {
         match self {
             // Only ref rng because match statements are more greed than god damn closures
             NodeType::Writer { white, ref mut rng } => {
-                let chars = String::from(CHARS).chars().coolect::<Vec<char>>();
-                let char = chars.choose(rng).unwrap().to_owned();
+                let char = String::from(CHARS).
+                    chars().
+                    collect::<Vec<char>>().
+                    choose(rng).
+                    unwrap().
+                    to_owned();
                 let bold = rng.gen();
                 let color_type = if *white {
                     ColorType::White
                 } else {
                     ColorType::Normal
                 };
-                Character {
+                Character::Char {
                     char,
                     bold,
                     color_type,
@@ -84,3 +89,17 @@ impl NodeType {
     }
 }
 
+// Node impl will have a new method and update
+// See update method for more information
+impl Node {
+    fn new(mut node_type: NodeType) -> Node {
+        let y = 1;
+        let char = node_type.choice_char();
+        Node {
+            node_type,
+            y,
+            previous_char: Character::Blank,
+            char,
+        }
+    }
+}
