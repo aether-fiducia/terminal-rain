@@ -118,4 +118,59 @@ impl Node {
     }
 }
 
+// New, spawn, update, see documentation for each
+impl Column {
+    fn new(row_count: u16) -> Column {
+        let mut rng = thread_rng();
+        // This is arbitrary
+        let wait_time = rng.gen_range(0, row_count);
+        Column {
+            row_count,
+            wait_time,
+            rng,
+            nodes: VecDeque::new(),
+            is_drawing: false,
+        }
+    }
+
+    // Spawn node does what the name would imply, with a delay being set to the wait time and the
+    // spawned node has a type opposite of the value of is_drawing
+    fn spawn_node(&mut self) -> Node {
+        // The following three lines are sort of arbitrary
+        let max_range = self.row_count - 3;
+        let start_delay = self.rng.gen_range(0..max_range);
+        self.wait_time = start_delay;
+
+        self.is_drawing = !self.is_drawing;
+        if self.is_drawing {
+            let white = self.rng.gen::<bool>();
+            Node::new(NodeType::Writer {
+                white,
+                rng: thread_rng(),
+            })
+        } else {
+            Node::new(NodeType::Eraser)
+        }
+    }
+
+    // The update method needs to call update on every node
+    // As well, if the wait time has reached zero a new node should be pushed to the back
+    // Lastly, if the front node has hit the y max, it should be pop'd
+    fn update(&mut self) {
+        self.nodes.iter_mut().map(|n| n.update());
+
+        if self.wait_time == 0 {
+            self.nodes.push_back(self.spawn_node());
+        } else {
+            self.wait_time -= 1;
+        }
+
+        if let Some(node) = self.nodes.front() {
+            if node.y > self.row_count {
+                self.nodes.pop_front()
+            }
+        }
+    }
+}
+
 
