@@ -138,7 +138,7 @@ impl Column {
     fn spawn_node(&mut self) -> Node {
         // The following three lines are sort of arbitrary
         let max_range = self.row_count - 3;
-        let start_delay = self.rng.gen_range(0..max_range);
+        let start_delay = self.rng.gen_range(0, max_range);
         self.wait_time = start_delay;
 
         self.is_drawing = !self.is_drawing;
@@ -167,7 +167,7 @@ impl Column {
 
         if let Some(node) = self.nodes.front() {
             if node.y > self.row_count {
-                self.nodes.pop_front()
+                self.nodes.pop_front();
             }
         }
     }
@@ -186,8 +186,8 @@ impl MatrixApp {
         let column_count = size_x / 2;
 
         MatrixApp {
-            (0..column_count)map(|_| Colunm::new(size_y)).collect(),
-            stdout: RefCell::new(stdout)),
+            columns: (0..column_count).map(|_| Column::new(size_y)).collect(),
+            stdout: RefCell::new(stdout),
         }
     }
 
@@ -196,4 +196,10 @@ impl MatrixApp {
         self.update();
         self.draw()
     }
+
+    // Update needs to update each column
+    fn update(&mut self) {
+        self.columns.iter_mut().map(|x| x.update());
+    }
+}
 
