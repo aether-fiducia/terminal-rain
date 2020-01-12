@@ -180,7 +180,7 @@ impl Column {
 // threading bullshit comes up figure out a better way to do this
 impl MatrixApp {
     
-    fn new() -> MatrixApp {
+    pub fn new() -> MatrixApp {
         let (size_x, size_y) = termion::terminal_size().unwrap();
         let mut stdout = stdout().into_raw_mode().unwrap();
         write!(stdout, "{}{}", termion::clear::All, termion::cursor::Hide).unwrap();
@@ -194,7 +194,7 @@ impl MatrixApp {
     }
 
     // A MatrixApp will need to update on a tick and draw itself, so let's bundle that
-    fn on_tick(&mut self) {
+    pub fn on_tick(&mut self) {
         self.update();
         self.draw()
     }
