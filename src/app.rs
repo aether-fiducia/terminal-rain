@@ -160,8 +160,10 @@ impl Column {
         self.nodes.iter_mut().map(|n| n.update());
 
         if self.wait_time == 0 {
-            self.nodes.push_back(self.spawn_node());
-        } else {
+            let new_node_spawn = self.spawn_node();
+            self.nodes.push_back(new_node_spawn);
+        }
+        else {
             self.wait_time -= 1;
         }
 
@@ -200,6 +202,73 @@ impl MatrixApp {
     // Update needs to update each column
     fn update(&mut self) {
         self.columns.iter_mut().map(|x| x.update());
+    }
+
+    fn draw(&mut self) {
+        // First, each node in every column needs to have a {} placed in stdout with cursor
+        // movement
+        // Next, match against the character type to print either a character or a blank space
+        // where the cursor now lies
+        for (x, column) in self.columns.iter().enumerate() {
+            for node in column.nodes.iter() {
+                write!(
+                    self.stdout.borrow_mut(),
+                    "{}",
+                    termion::cursor::Goto(x as u16, node.y)
+                    )
+                    .unwrap();
+
+                match &node.char {
+                    Character::Char{
+                        char,
+                        bold,
+                        color_type,
+                    } => {
+                        match color_type {
+                            ColorType::White => {
+                                self.set_white_char_style();
+                            }
+                            ColorType::Normal => {
+                                self.set_normal_char_style(*bold);
+                            }
+                        };
+                        write!(
+                            self.stdout.borrow_mut(),
+                            "{}{}",
+                            char,
+                            termion::style::Reset
+                            )
+                            .unwrap();
+                    }
+                    Character::Blank => {
+                        write!(self.stdout.borrow_mut(), " ").unwrap();
+                    }
+                }
+            }
+        }
+    self.stdout.borrow_mut().flush().unwrap();
+    }
+
+    fn set_white_char_style(&self) {
+        write!(
+            self.stdout.borrow_mut(),
+            "{}{}",
+            termion::style::Bold,
+            termion::color::Fg(termion::color::White)
+            )
+            .unwrap();
+    }
+
+    fn set_normal_char_style(&self, bold: bool) {
+        if bold {
+            write!(self.stdout.borrow_mut(), "{}", termion::style::Bold).unwrap();
+        }
+        write!(
+            self.stdout.borrow_mut(),
+            "{}",
+            termion::color::Fg(termion::color::Green)
+            )
+            .unwrap();
     }
 }
 
