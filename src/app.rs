@@ -298,6 +298,11 @@ impl MatrixApp {
 // Shit I needed this a while ago
 impl Drop for MatrixApp {
     fn drop(&mut self) {
-        write!(self.stdout.borrow_mut(), "{}", termion::cursor::Show).unwrap();
+        write!(
+            self.stdout.borrow_mut(), 
+            "{}{}", 
+            termion::clear::All, 
+            termion::cursor::Show)
+            .unwrap();
     }
 }
