@@ -19,12 +19,12 @@ pub enum Event {
  */
 pub struct Events {
     rx: mpsc::Receiver<Event>,
-    input_handle: thread::JoinHandle<()>,
-    tick_handle: thread::JoinHandle<()>,
+    _input_handle: thread::JoinHandle<()>,
+    _tick_handle: thread::JoinHandle<()>,
 }
 
 impl Events {
-    pub fn new(tick_rate: u64) -> Self {
+    pub fn new(tick_rate: u64) -> Events {
         // Open a sender and receiver for the Events receiver and two threads
         let (tx, rx) = mpsc::channel();
         /* Make the input handle by:
@@ -37,8 +37,13 @@ impl Events {
             let tx = tx.clone();
             thread::spawn (move || {
                 let stdin = io::stdin();
-                if stdin.keys().any(|x| if let Ok(Key::Ctrl('c')) = x {true}
-                                    else {false}) {
+                if stdin.keys().any(|x| -> bool {
+                    if let Ok(Key::Ctrl('c')) = x {
+                        true
+                    }
+                    else {
+                        false
+                    }}) {
                     tx.send(Event::Exit).unwrap();
                 }
             })
@@ -59,8 +64,8 @@ impl Events {
         // Return Events
         Events {
             rx,
-            input_handle: input_handle,
-            tick_handle: tick_handle,
+            _input_handle: input_handle,
+            _tick_handle: tick_handle,
         }
     }
     // Call next function on hidden reveiver

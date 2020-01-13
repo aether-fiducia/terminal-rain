@@ -66,7 +66,7 @@ impl NodeType {
         match self {
             // Only ref rng because match statements are more greed than god damn closures
             NodeType::Writer { white, ref mut rng } => {
-                let char = String::from(CHARS).
+                let character = String::from(CHARS).
                     chars().
                     collect::<Vec<char>>().
                     choose(rng).
@@ -79,7 +79,7 @@ impl NodeType {
                     ColorType::Normal
                 };
                 Character::Char {
-                    char,
+                    char: character,
                     bold,
                     color_type,
                 }
@@ -94,12 +94,12 @@ impl NodeType {
 impl Node {
     fn new(mut node_type: NodeType) -> Node {
         let y = 1;
-        let char = node_type.choice_char();
+        let character = node_type.choice_char();
         Node {
             node_type,
             y,
             previous_char: Character::Blank,
-            char,
+            char: character,
         }
     }
     /* Alright, this is why this shit works.
@@ -138,7 +138,7 @@ impl Column {
     fn spawn_node(&mut self) -> Node {
         // The following three lines are sort of arbitrary
         let max_range = self.row_count - 3;
-        let start_delay = self.rng.gen_range(0, max_range);
+        let start_delay = self.rng.gen_range(1, max_range);
         self.wait_time = start_delay;
 
         self.is_drawing = !self.is_drawing;
@@ -157,7 +157,7 @@ impl Column {
     // As well, if the wait time has reached zero a new node should be pushed to the back
     // Lastly, if the front node has hit the y max, it should be pop'd
     fn update(&mut self) {
-        self.nodes.iter_mut().map(|n| n.update());
+        self.nodes.iter_mut().for_each(|n| n.update());
 
         if self.wait_time == 0 {
             let new_node_spawn = self.spawn_node();
@@ -187,8 +187,10 @@ impl MatrixApp {
         // Totally arbitrary, thanks Ryan.
         let column_count = size_x / 2;
 
+        let columns = (0..column_count).map(|_| Column::new(size_y)).collect(); 
+
         MatrixApp {
-            columns: (0..column_count).map(|_| Column::new(size_y)).collect(),
+            columns,
             stdout: RefCell::new(stdout),
         }
     }
@@ -201,7 +203,7 @@ impl MatrixApp {
 
     // Update needs to update each column
     fn update(&mut self) {
-        self.columns.iter_mut().map(|x| x.update());
+        self.columns.iter_mut().for_each(|x| x.update());
     }
 
     fn draw(&mut self) {
@@ -214,7 +216,7 @@ impl MatrixApp {
                 write!(
                     self.stdout.borrow_mut(),
                     "{}",
-                    termion::cursor::Goto(x as u16, node.y)
+                    termion::cursor::Goto((x * 2) as u16, node.y)
                     )
                     .unwrap();
 
@@ -244,9 +246,30 @@ impl MatrixApp {
                         write!(self.stdout.borrow_mut(), " ").unwrap();
                     }
                 }
+                // Make a node.y of 1 skip
+                if node.y == 1 {
+                    continue;
+                }
+
+                // Only the first of the falling chars should be white
+                if let Character::Char {
+                    char,
+                    bold,
+                    color_type: ColorType::White,
+                } = &node.char {
+                    self.set_normal_char_style(*bold);
+                    write!(
+                        self.stdout.borrow_mut(),
+                        "{}{}{}",
+                        termion::cursor::Goto((x * 2) as u16, (node.y - 1) as u16),
+                        char,
+                        termion::style::Reset
+                        )
+                        .unwrap();
+                }
             }
         }
-    self.stdout.borrow_mut().flush().unwrap();
+        self.stdout.borrow_mut().flush().unwrap();
     }
 
     fn set_white_char_style(&self) {
@@ -272,3 +295,9 @@ impl MatrixApp {
     }
 }
 
+// Shit I needed this a while ago
+impl Drop for MatrixApp {
+    fn drop(&mut self) {
+        write!(self.stdout.borrow_mut(), "{}", termion::cursor::Show).unwrap();
+    }
+}
