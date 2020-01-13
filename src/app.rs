@@ -300,9 +300,10 @@ impl Drop for MatrixApp {
     fn drop(&mut self) {
         write!(
             self.stdout.borrow_mut(), 
-            "{}{}", 
+            "{}{}{}", 
             termion::clear::All, 
-            termion::cursor::Show)
+            termion::cursor::Show,
+            termion::cursor::Restore)
             .unwrap();
     }
 }
